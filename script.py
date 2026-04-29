@@ -2,11 +2,12 @@ import requests
 import os
 import json
 import random
-from google import genai
+import google.generativeai as genai
 from datetime import datetime, timedelta
 from topics import TOPICS
 
-client = genai.Client(api_key=os.getenv('GEMINI_API_KEY'))
+genai.configure(api_key=os.getenv('GEMINI_API_KEY'))
+model = genai.GenerativeModel('gemini-2.0-flash-exp')
 
 HISTORY_FILE = "used_topics.json"
 
@@ -46,10 +47,7 @@ Requirements:
 - Add 3 to 5 relevant hashtags on the last line
 - Write it as if you are sharing from your own personal experience"""
 
-    response = client.models.generate_content(
-        model="gemini-2.0-flash",
-        contents=prompt
-    )
+    response = model.generate_content(prompt)
     return response.text
 
 def post_to_linkedin(text):
@@ -89,5 +87,4 @@ if result.status_code == 201:
     save_history(history)
     print("Posted successfully!")
 else:
-    print(f"Post failed. Status code: {result.status_code}")
-    print(result.text)
+    print(f"Post failed. Status code: {res
