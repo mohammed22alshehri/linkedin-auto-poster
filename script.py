@@ -35,18 +35,18 @@ def pick_topic(history):
     return random.choice(available)
 
 def generate_post(topic):
-    prompt = f"""You are a senior software engineer and tech expert with years of hands-on experience.
-Write a professional LinkedIn post in English about: {topic}
-
-Requirements:
-- Start with a bold statement or question that grabs attention immediately
-- Provide real practical value that engineers can apply directly
-- Use concrete examples or numbers where possible
-- Length: 120 to 160 words
-- End with a question that encourages comments
-- Add 3 to 5 relevant hashtags on the last line
-- Write it as if you are sharing from your own personal experience"""
-
+    prompt = (
+        "You are a senior software engineer and tech expert with years of hands-on experience.\n"
+        "Write a professional LinkedIn post in English about: " + topic + "\n\n"
+        "Requirements:\n"
+        "- Start with a bold statement or question that grabs attention immediately\n"
+        "- Provide real practical value that engineers can apply directly\n"
+        "- Use concrete examples or numbers where possible\n"
+        "- Length: 120 to 160 words\n"
+        "- End with a question that encourages comments\n"
+        "- Add 3 to 5 relevant hashtags on the last line\n"
+        "- Write it as if you are sharing from your own personal experience"
+    )
     response = model.generate_content(prompt)
     return response.text
 
@@ -55,12 +55,12 @@ def post_to_linkedin(text):
     person_id = os.getenv('LINKEDIN_PERSON_ID')
     url = "https://api.linkedin.com/v2/ugcPosts"
     headers = {
-        "Authorization": f"Bearer {access_token}",
+        "Authorization": "Bearer " + access_token,
         "Content-Type": "application/json",
         "X-Restli-Protocol-Version": "2.0.0"
     }
     payload = {
-        "author": f"urn:li:person:{person_id}",
+        "author": "urn:li:person:" + person_id,
         "lifecycleState": "PUBLISHED",
         "specificContent": {
             "com.linkedin.ugc.ShareContent": {
@@ -74,12 +74,12 @@ def post_to_linkedin(text):
     }
     return requests.post(url, headers=headers, json=payload)
 
-print(f"Runtime: {datetime.now()}")
+print("Runtime: " + str(datetime.now()))
 history = load_history()
 topic = pick_topic(history)
-print(f"Selected topic: {topic}")
+print("Selected topic: " + topic)
 post_content = generate_post(topic)
-print(f"Generated post:\n{post_content}\n")
+print("Generated post:\n" + post_content)
 result = post_to_linkedin(post_content)
 
 if result.status_code == 201:
@@ -87,4 +87,5 @@ if result.status_code == 201:
     save_history(history)
     print("Posted successfully!")
 else:
-    print(f"Post failed. Status code: {res
+    print("Post failed. Status code: " + str(result.status_code))
+    print(result.text)
