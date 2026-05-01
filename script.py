@@ -2,11 +2,8 @@ import requests
 import os
 import json
 import random
-from google import genai
 from datetime import datetime, timedelta
 from topics import TOPICS
-
-client = genai.Client(api_key=os.getenv('GEMINI_API_KEY'))
 
 HISTORY_FILE = "used_topics.json"
 
@@ -29,11 +26,13 @@ def pick_topic(history):
             recently_used.add(topic)
     available = [t for t in TOPICS if t not in recently_used]
     if not available:
-        print("All topics used, restarting the cycle...")
         available = TOPICS
     return random.choice(available)
 
 def generate_post(topic):
+    api_key = os.getenv('GEMINI_API_KEY')
+    url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent"
+    
     prompt = (
         "You are a senior software engineer and tech expert with years of hands-on experience.\n"
         "Write a professional LinkedIn post in English about: " + topic + "\n\n"
@@ -46,11 +45,31 @@ def generate_post(topic):
         "- Add 3 to 5 relevant hashtags on the last line\n"
         "- Write it as if you are sharing from your own personal experience"
     )
-    response = client.models.generate_content(
-        model="gemini-2.0-flash",
-        contents=prompt
-    )
-    return response.text
+    
+    payload = {
+        "contents": [
+            {
+                "parts": [
+                    {
+                        "text": prompt
+                    }
+                ]
+            }
+        ]
+    }
+    
+    headers = {
+        "Content-Type": "application/json",
+        "X-goog-api-key": api_key
+    }
+    
+    response = requests.post(url, json=payload, headers=headers)
+    
+    if response.status_code == 200:
+        data = response.json()
+        return data['candidates'][0]['content']['parts'][0]['text']
+    else:
+        raise Exception(f"Gemini API error: {response.status_code} - {response.text}")
 
 def post_to_linkedin(text):
     access_token = os.getenv('LINKEDIN_TOKEN')
@@ -80,14 +99,18 @@ print("Runtime: " + str(datetime.now()))
 history = load_history()
 topic = pick_topic(history)
 print("Selected topic: " + topic)
-post_content = generate_post(topic)
-print("Generated post:\n" + post_content)
-result = post_to_linkedin(post_content)
 
-if result.status_code == 201:
-    history[topic] = datetime.now().isoformat()
-    save_history(history)
-    print("Posted successfully!")
-else:
-    print("Post failed. Status code: " + str(result.status_code))
-    print(result.text)
+try:
+    post_content = generate_post(topic)
+    print("Generated post:\n" + post_content)
+    result = post_to_linkedin(post_content)
+
+    if result.status_code == 201:
+        history[topic] = datetime.now().isoformat()
+        save_history(history)
+        print("Posted successfully!")
+    else:
+        print("Post failed. Status code: " + str(result.status_code))
+        print(result.text)
+except Exception as e:
+    print("Error: " + str(e))
