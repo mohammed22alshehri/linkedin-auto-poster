@@ -2,12 +2,11 @@ import requests
 import os
 import json
 import random
-import google.generativeai as genai
+from google import genai
 from datetime import datetime, timedelta
 from topics import TOPICS
 
-genai.configure(api_key=os.getenv('GEMINI_API_KEY'))
-model = genai.GenerativeModel('gemini-2.0-flash-exp')
+client = genai.Client(api_key=os.getenv('GEMINI_API_KEY'))
 
 HISTORY_FILE = "used_topics.json"
 
@@ -47,7 +46,10 @@ def generate_post(topic):
         "- Add 3 to 5 relevant hashtags on the last line\n"
         "- Write it as if you are sharing from your own personal experience"
     )
-    response = model.generate_content(prompt)
+    response = client.models.generate_content(
+        model="gemini-2.0-flash",
+        contents=prompt
+    )
     return response.text
 
 def post_to_linkedin(text):
