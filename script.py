@@ -74,14 +74,26 @@ def generate_post(topic):
 def post_to_linkedin(text):
     access_token = os.getenv('LINKEDIN_TOKEN')
     person_id = os.getenv('LINKEDIN_PERSON_ID')
+    
+    print(f"DEBUG: Using person_id format: {person_id}")
+    
     url = "https://api.linkedin.com/v2/ugcPosts"
     headers = {
         "Authorization": "Bearer " + access_token,
         "Content-Type": "application/json",
         "X-Restli-Protocol-Version": "2.0.0"
     }
+    
+    # Try both formats - with and without urn:li:member:
+    if person_id.startswith("urn:li:member:"):
+        author = person_id
+    else:
+        author = "urn:li:member:" + person_id
+    
+    print(f"DEBUG: Using author: {author}")
+    
     payload = {
-        "author": "urn:li:member:" + person_id,
+        "author": author,
         "lifecycleState": "PUBLISHED",
         "specificContent": {
             "com.linkedin.ugc.ShareContent": {
@@ -93,7 +105,13 @@ def post_to_linkedin(text):
             "com.linkedin.ugc.MemberNetworkVisibility": "PUBLIC"
         }
     }
-    return requests.post(url, headers=headers, json=payload)
+    
+    print(f"DEBUG: Sending payload to LinkedIn...")
+    response = requests.post(url, headers=headers, json=payload)
+    print(f"DEBUG: Response status: {response.status_code}")
+    print(f"DEBUG: Response body: {response.text}")
+    
+    return response
 
 print("Runtime: " + str(datetime.now()))
 history = load_history()
@@ -114,3 +132,5 @@ try:
         print(result.text)
 except Exception as e:
     print("Error: " + str(e))
+    import traceback
+    traceback.print_exc()
