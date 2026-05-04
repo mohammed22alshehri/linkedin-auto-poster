@@ -75,7 +75,8 @@ def post_to_linkedin(text):
     access_token = os.getenv('LINKEDIN_TOKEN')
     person_id = os.getenv('LINKEDIN_PERSON_ID')
     
-    print(f"DEBUG: Using person_id format: {person_id}")
+    print(f"DEBUG: Using person_id: {person_id}")
+    print(f"DEBUG: Token length: {len(access_token) if access_token else 'None'}")
     
     url = "https://api.linkedin.com/v2/ugcPosts"
     headers = {
@@ -84,13 +85,14 @@ def post_to_linkedin(text):
         "X-Restli-Protocol-Version": "2.0.0"
     }
     
-    # Try both formats - with and without urn:li:member:
+    # Format author ID correctly
     if person_id.startswith("urn:li:member:"):
         author = person_id
     else:
         author = "urn:li:member:" + person_id
     
     print(f"DEBUG: Using author: {author}")
+    print(f"DEBUG: Post text length: {len(text)}")
     
     payload = {
         "author": author,
@@ -107,8 +109,11 @@ def post_to_linkedin(text):
     }
     
     print(f"DEBUG: Sending payload to LinkedIn...")
+    print(f"DEBUG: Payload: {json.dumps(payload, indent=2)}")
+    
     response = requests.post(url, headers=headers, json=payload)
     print(f"DEBUG: Response status: {response.status_code}")
+    print(f"DEBUG: Response headers: {response.headers}")
     print(f"DEBUG: Response body: {response.text}")
     
     return response
@@ -123,14 +128,15 @@ try:
     print("Generated post:\n" + post_content)
     result = post_to_linkedin(post_content)
 
-    if result.status_code == 201:
+    # Accept both 201 (Created) and 200 (OK) as success
+    if result.status_code in [200, 201]:
         history[topic] = datetime.now().isoformat()
         save_history(history)
-        print("Posted successfully!")
+        print("✅ Posted successfully!")
     else:
-        print("Post failed. Status code: " + str(result.status_code))
-        print(result.text)
+        print(f"❌ Post failed. Status code: {result.status_code}")
+        print(f"Response: {result.text}")
 except Exception as e:
-    print("Error: " + str(e))
+    print("❌ Error: " + str(e))
     import traceback
     traceback.print_exc()
