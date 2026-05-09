@@ -28,43 +28,29 @@ def pick_topic(history):
         except:
             pass
     available = [t for t in TOPICS if t not in recently_used]
-    if not available:
-        print("All topics used, restarting cycle...")
-        available = TOPICS
-    return random.choice(available)
+    return random.choice(available if available else TOPICS)
 
 def generate_post(topic):
     api_key = os.getenv('GEMINI_API_KEY')
-    url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent"
+    url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent"
     
     prompt = (
-        "You are a senior software engineer and tech expert with years of hands-on experience.\n"
-        "Write a professional LinkedIn post in English about: " + topic + "\n\n"
+        "You are a senior software engineer and tech expert.\n"
+        "Write a professional LinkedIn post in English about: " + topic + "\n"
         "Requirements:\n"
-        "- Start with a bold statement or question that grabs attention immediately\n"
-        "- Provide real practical value that engineers can apply directly\n"
-        "- Use concrete examples or numbers where possible\n"
-        "- Length: 120 to 160 words\n"
-        "- End with a question that encourages comments\n"
-        "- Add 3 to 5 relevant hashtags on the last line\n"
-        "- Write it as if you are sharing from your own personal experience"
+        "- Start with a bold statement\n"
+        "- 120-160 words\n"
+        "- End with a question\n"
+        "- Add 3-5 hashtags"
     )
-    
-    payload = {
-        "contents": [
-            {
-                "parts": [
-                    {
-                        "text": prompt
-                    }
-                ]
-            }
-        ]
-    }
     
     headers = {
         "Content-Type": "application/json",
         "X-goog-api-key": api_key
+    }
+    
+    payload = {
+        "contents": [{"parts": [{"text": prompt}]}]
     }
     
     response = requests.post(url, json=payload, headers=headers)
@@ -73,82 +59,60 @@ def generate_post(topic):
         data = response.json()
         return data['candidates'][0]['content']['parts'][0]['text']
     else:
-        raise Exception(f"Gemini API error: {response.status_code} - {response.text}")
+        raise Exception(f"Gemini error: {response.status_code}")
 
 def post_to_linkedin(text):
-    access_token = os.getenv('LINKEDIN_TOKEN')
-    person_id = os.getenv('LINKEDIN_PERSON_ID')
+    token = os.getenv('LINKEDIN_TOKEN')
     
-    # تصحيح صيغة الـ ID
-    if "urn:li:person:" in person_id:
-        author = person_id.replace("urn:li:person:", "urn:li:member:")
-    elif person_id.startswith("urn:li:member:"):
-        author = person_id
-    else:
-        author = "urn:li:member:" + person_id
+    # استخدام Simple Share Endpoint (أسهل وأكثر موثوقية)
+    url = "https://api.linkedin.com/v2/shares"
     
-    url = "https://api.linkedin.com/v2/ugcPosts"
     headers = {
-        "Authorization": "Bearer " + access_token,
+        "Authorization": f"Bearer {token}",
         "Content-Type": "application/json",
         "X-Restli-Protocol-Version": "2.0.0"
     }
     
     payload = {
-        "author": author,
-        "lifecycleState": "PUBLISHED",
-        "specificContent": {
-            "com.linkedin.ugc.ShareContent": {
-                "shareCommentary": {"text": text},
-                "shareMediaCategory": "NONE"
-            }
+        "content": {
+            "contentEntities": [
+                {
+                    "entity": "urn:li:digitalmediaAsset:test"
+                }
+            ],
+            "title": "Professional Insights",
+            "shareCommentary": text
         },
-        "visibility": {
-            "com.linkedin.ugc.MemberNetworkVisibility": "PUBLIC"
+        "distribution": {
+            "linkedInDistributionTarget": {}
+        },
+        "owner": "urn:li:person:" + os.getenv('LINKEDIN_PERSON_ID'),
+        "shareMediaCategory": "NONE",
+        "text": {
+            "text": text
         }
     }
     
-    response = requests.post(url, headers=headers, json=payload)
-    return response
+    return requests.post(url, headers=headers, json=payload)
 
-# Main execution
-print("=" * 50)
-print("LinkedIn Auto Post - Starting at " + str(datetime.now()))
-print("=" * 50)
-
+print("Starting LinkedIn Auto Post...")
 try:
     history = load_history()
     topic = pick_topic(history)
-    print("\n📌 Selected Topic: " + topic)
+    print(f"Topic: {topic}")
     
-    print("\n⏳ Generating post with Gemini...")
     post_content = generate_post(topic)
-    print("\n✍️ Generated Post:")
-    print("-" * 50)
-    print(post_content)
-    print("-" * 50)
+    print(f"Post generated successfully")
     
-    print("\n📤 Publishing to LinkedIn...")
     result = post_to_linkedin(post_content)
     
-    if result.status_code == 201:
+    if result.status_code in [200, 201]:
         history[topic] = datetime.now().isoformat()
         save_history(history)
-        print("\n✅ SUCCESS! Post published to LinkedIn")
-        print("Status: " + str(result.status_code))
-    elif result.status_code == 200:
-        history[topic] = datetime.now().isoformat()
-        save_history(history)
-        print("\n✅ SUCCESS! Post published to LinkedIn")
-        print("Status: " + str(result.status_code))
+        print("SUCCESS!")
     else:
-        print("\n❌ FAILED! Could not publish to LinkedIn")
-        print("Status Code: " + str(result.status_code))
-        print("Response: " + result.text)
-
+        print(f"Status: {result.status_code}")
+        print(f"Response: {result.text}")
+        
 except Exception as e:
-    print("\n❌ ERROR: " + str(e))
-    import traceback
-    traceback.print_exc()
-
-print("\n" + "=" * 50)
+    print(f"Error: {str(e)}")
