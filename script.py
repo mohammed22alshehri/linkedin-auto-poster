@@ -1,22 +1,63 @@
 import os
 import requests
+import json
+from groq import Groq
 
-LINKEDIN_TOKEN = os.getenv("LINKEDIN_TOKEN")
+# إعدادات البيئة
+LINKEDIN_TOKEN = os.getenv("LINKEDIN_TOKEN").strip()
+LINKEDIN_PERSON_ID = os.getenv("LINKEDIN_PERSON_ID").strip()
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
-def check_token():
-    # محاولة جلب بيانات البروفايل للتأكد من صلاحية التوكن
-    url = "https://api.linkedin.com/v2/userinfo"
-    headers = {"Authorization": f"Bearer {LINKEDIN_TOKEN.strip()}"} # لاحظ الـ .strip() لإزالة المسافات
+def generate_post():
+    client = Groq(api_key=GROQ_API_KEY)
+    # يمكنك تعديل البرومبت هنا ليناسب تخصصك في الـ AI والأنظمة
+    prompt = "Write a short, professional LinkedIn post in Arabic about the importance of AI in web engineering. Include 3 hashtags."
     
-    print(f"Testing token: {LINKEDIN_TOKEN[:10]}...") # يطبع أول 10 حروف للتأكد
-    response = requests.get(url, headers=headers)
+    completion = client.chat.completions.create(
+        model="llama-3.3-70b-versatile",
+        messages=[{"role": "user", "content": prompt}],
+    )
+    return completion.choices[0].message.content
+
+def post_to_linkedin(content):
+    # استخدام Endpoint الإصدار الثاني والمضمون للنشر
+    url = "https://api.linkedin.com/v2/ugcPosts"
     
-    if response.status_code == 200:
-        print("✅ Token is working perfectly from GitHub!")
-        print(f"Response: {response.json()}")
+    headers = {
+        "Authorization": f"Bearer {LINKEDIN_TOKEN}",
+        "Content-Type": "application/json",
+        "X-Restli-Protocol-Version": "2.0.0"
+    }
+    
+    post_data = {
+        "author": f"urn:li:person:{LINKEDIN_PERSON_ID}",
+        "lifecycleState": "PUBLISHED",
+        "specificContent": {
+            "com.linkedin.ugc.ShareContent": {
+                "shareCommentary": {
+                    "text": content
+                },
+                "shareMediaCategory": "NONE"
+            }
+        },
+        "visibility": {
+            "com.linkedin.ugc.MemberNetworkVisibility": "PUBLIC"
+        }
+    }
+    
+    response = requests.post(url, headers=headers, json=post_data)
+    
+    if response.status_code in [200, 201]:
+        print("🚀 Post published successfully!")
     else:
-        print(f"❌ Failed: {response.status_code}")
-        print(f"Reason: {response.text}")
+        print(f"❌ Failed to post: {response.status_code}")
+        print(f"Response: {response.text}")
 
 if __name__ == "__main__":
-    check_token()
+    if not LINKEDIN_TOKEN or not LINKEDIN_PERSON_ID:
+        print("❌ Missing LinkedIn Credentials!")
+    else:
+        print("🤖 Generating content...")
+        post_content = generate_post()
+        print("📤 Sending to LinkedIn...")
+        post_to_linkedin(post_content)
