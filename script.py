@@ -32,16 +32,12 @@ def pick_topic(history):
 
 def generate_post(topic):
     api_key = os.getenv('GEMINI_API_KEY')
-    url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent"
+    url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
     
     prompt = (
-        "You are a senior software engineer and tech expert.\n"
-        "Write a professional LinkedIn post in English about: " + topic + "\n"
-        "Requirements:\n"
-        "- Start with a bold statement\n"
-        "- 120-160 words\n"
-        "- End with a question\n"
-        "- Add 3-5 hashtags"
+        "You are a senior software engineer.\n"
+        "Write a LinkedIn post about: " + topic + "\n"
+        "Keep it 120-160 words. Add a question and 3-5 hashtags."
     )
     
     headers = {
@@ -53,20 +49,21 @@ def generate_post(topic):
         "contents": [{"parts": [{"text": prompt}]}]
     }
     
-    response = requests.post(url, json=payload, headers=headers)
-    
-    if response.status_code == 200:
-        data = response.json()
-        return data['candidates'][0]['content']['parts'][0]['text']
-    else:
-        raise Exception(f"Gemini error: {response.status_code}")
+    try:
+        response = requests.post(url, json=payload, headers=headers, timeout=30)
+        if response.status_code == 200:
+            data = response.json()
+            return data['candidates'][0]['content']['parts'][0]['text']
+        else:
+            raise Exception(f"Status {response.status_code}")
+    except Exception as e:
+        raise Exception(f"Gemini: {str(e)}")
 
 def post_to_linkedin(text):
     token = os.getenv('LINKEDIN_TOKEN')
+    person_id = os.getenv('LINKEDIN_PERSON_ID')
     
-    # استخدام Simple Share Endpoint (أسهل وأكثر موثوقية)
-    url = "https://api.linkedin.com/v2/shares"
-    
+    url = "https://api.linkedin.com/v2/ugcPosts"
     headers = {
         "Authorization": f"Bearer {token}",
         "Content-Type": "application/json",
@@ -74,37 +71,31 @@ def post_to_linkedin(text):
     }
     
     payload = {
-        "content": {
-            "contentEntities": [
-                {
-                    "entity": "urn:li:digitalmediaAsset:test"
-                }
-            ],
-            "title": "Professional Insights",
-            "shareCommentary": text
+        "author": f"urn:li:person:{person_id}",
+        "lifecycleState": "PUBLISHED",
+        "specificContent": {
+            "com.linkedin.ugc.ShareContent": {
+                "shareCommentary": {"text": text},
+                "shareMediaCategory": "NONE"
+            }
         },
-        "distribution": {
-            "linkedInDistributionTarget": {}
-        },
-        "owner": "urn:li:person:" + os.getenv('LINKEDIN_PERSON_ID'),
-        "shareMediaCategory": "NONE",
-        "text": {
-            "text": text
+        "visibility": {
+            "com.linkedin.ugc.MemberNetworkVisibility": "PUBLIC"
         }
     }
     
-    return requests.post(url, headers=headers, json=payload)
+    return requests.post(url, headers=headers, json=payload, timeout=10)
 
-print("Starting LinkedIn Auto Post...")
+print("Starting...")
 try:
     history = load_history()
     topic = pick_topic(history)
     print(f"Topic: {topic}")
     
-    post_content = generate_post(topic)
-    print(f"Post generated successfully")
+    content = generate_post(topic)
+    print("Content generated")
     
-    result = post_to_linkedin(post_content)
+    result = post_to_linkedin(content)
     
     if result.status_code in [200, 201]:
         history[topic] = datetime.now().isoformat()
@@ -112,7 +103,7 @@ try:
         print("SUCCESS!")
     else:
         print(f"Status: {result.status_code}")
-        print(f"Response: {result.text}")
+        print(f"Error: {result.text[:200]}")
         
 except Exception as e:
     print(f"Error: {str(e)}")
