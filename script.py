@@ -3,19 +3,20 @@ import requests
 
 LINKEDIN_TOKEN = os.getenv("LINKEDIN_TOKEN")
 
-def get_my_id():
-    # هذا الرابط مخصص لجلب بيانات صاحب التوكن (OpenID)
+def check_token():
+    # محاولة جلب بيانات البروفايل للتأكد من صلاحية التوكن
     url = "https://api.linkedin.com/v2/userinfo"
-    headers = {"Authorization": f"Bearer {LINKEDIN_TOKEN}"}
+    headers = {"Authorization": f"Bearer {LINKEDIN_TOKEN.strip()}"} # لاحظ الـ .strip() لإزالة المسافات
     
+    print(f"Testing token: {LINKEDIN_TOKEN[:10]}...") # يطبع أول 10 حروف للتأكد
     response = requests.get(url, headers=headers)
+    
     if response.status_code == 200:
-        data = response.json()
-        print(f"✅ Your Name: {data.get('name')}")
-        print(f"🆔 Your Person ID (sub): {data.get('sub')}")
-        print(f"🔗 Full URN: urn:li:person:{data.get('sub')}")
+        print("✅ Token is working perfectly from GitHub!")
+        print(f"Response: {response.json()}")
     else:
-        print(f"❌ Error: {response.status_code} - {response.text}")
+        print(f"❌ Failed: {response.status_code}")
+        print(f"Reason: {response.text}")
 
 if __name__ == "__main__":
-    get_my_id()
+    check_token()
