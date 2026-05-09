@@ -2,15 +2,16 @@ name: LinkedIn Auto Post
 
 on:
   schedule:
+    # سيتم التشغيل يومياً الساعة 9 صباحاً بتوقيت جرينتش
     - cron: '0 9 * * *'
-  workflow_dispatch: 
+  workflow_dispatch: # يتيح لك تشغيل البوت يدوياً للتجربة
 
 jobs:
   post:
     runs-on: ubuntu-latest
     
     permissions:
-      contents: write
+      contents: write # ضروري للسماح للبوت بتحديث ملف used_topics.json
 
     steps:
       - name: Checkout Repository
@@ -25,14 +26,12 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          # لاحظ هنا استبدلنا مكتبة جيميناي بمكتبة جروك
           pip install requests groq
 
       - name: Run Script
         env:
           LINKEDIN_TOKEN: ${{ secrets.LINKEDIN_TOKEN }}
           LINKEDIN_PERSON_ID: ${{ secrets.LINKEDIN_PERSON_ID }}
-          # استخدمنا هنا المفتاح الخاص بـ Groq
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
         run: python script.py
 
@@ -41,15 +40,17 @@ jobs:
           git config user.name "LinkedIn Bot"
           git config user.email "bot@automation.com"
           
-          # التأكد من وجود الملف قبل إضافته لتجنب الأخطاء
+          # التأكد من سحب آخر التغييرات لتجنب تعارض الـ Push
+          git pull --rebase origin main
+          
+          # إضافة ملف السجل فقط
           touch used_topics.json 
           git add used_topics.json
           
-          git pull --rebase origin main
-          
-          if [ -n "$(git status --porcelain)" ]; then
-            git commit -m "Update topics history - $(date '+%Y-%m-%d')"
-            git push
+          # التحقق مما إذا كان هناك تغيير فعلي في الملف قبل عمل commit
+          if git diff --cached --quiet; then
+            echo "No changes to commit. (Maybe post failed or topic already marked)"
           else
-            echo "No changes to commit"
+            git commit -m "Update topics history - $(date '+%Y-%m-%d')"
+            git push origin main
           fi
