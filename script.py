@@ -48,9 +48,9 @@ def post_to_linkedin(content, topic, used_topics):
     url = "https://api.linkedin.com/rest/posts"
     
     # ملاحظة: تأكد أن هذا التاريخ هو الأحدث في صفحة LinkedIn Developers لديك
-    headers = {
+   headers = {
         "Authorization": f"Bearer {LINKEDIN_TOKEN}",
-        "LinkedIn-Version": "202401", # إذا غيرت الإصدار في الموقع، غيره هنا أيضاً
+        "LinkedIn-Version": "202502", # قم بتغيير هذا السطر
         "X-Restli-Protocol-Version": "2.0.0",
         "Content-Type": "application/json",
     }
