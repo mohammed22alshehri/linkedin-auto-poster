@@ -40,17 +40,14 @@ jobs:
           git config user.name "LinkedIn Bot"
           git config user.email "bot@automation.com"
           
-          # التأكد من سحب آخر التغييرات لتجنب تعارض الـ Push
           git pull --rebase origin main
           
-          # إضافة ملف السجل فقط
-          touch used_topics.json 
+          touch used_topics.json
           git add used_topics.json
           
-          # التحقق مما إذا كان هناك تغيير فعلي في الملف قبل عمل commit
-          if git diff --cached --quiet; then
-            echo "No changes to commit. (Maybe post failed or topic already marked)"
-          else
+          if [ -n "$(git status --porcelain)" ]; then
             git commit -m "Update topics history - $(date '+%Y-%m-%d')"
             git push origin main
+          else
+            echo "No changes to commit"
           fi
