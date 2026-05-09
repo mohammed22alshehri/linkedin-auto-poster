@@ -31,33 +31,35 @@ def pick_topic(history):
     return random.choice(available if available else TOPICS)
 
 def generate_post(topic):
-    api_key = os.getenv('GEMINI_API_KEY')
-    url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
-    
-    prompt = (
-        "You are a senior software engineer.\n"
-        "Write a LinkedIn post about: " + topic + "\n"
-        "Keep it 120-160 words. Add a question and 3-5 hashtags."
-    )
+    api_key = os.getenv('GROQ_API_KEY')
+    url = "https://api.groq.com/openai/v1/chat/completions"
     
     headers = {
-        "Content-Type": "application/json",
-        "X-goog-api-key": api_key
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json"
     }
     
     payload = {
-        "contents": [{"parts": [{"text": prompt}]}]
+        "model": "mixtral-8x7b-32768",
+        "messages": [
+            {
+                "role": "user",
+                "content": f"Write a professional LinkedIn post about: {topic}\nKeep it 120-160 words. Add a question and 3-5 hashtags. Make it engaging."
+            }
+        ],
+        "max_tokens": 300,
+        "temperature": 0.7
     }
     
     try:
-        response = requests.post(url, json=payload, headers=headers, timeout=30)
+        response = requests.post(url, headers=headers, json=payload, timeout=15)
         if response.status_code == 200:
             data = response.json()
-            return data['candidates'][0]['content']['parts'][0]['text']
+            return data['choices'][0]['message']['content']
         else:
             raise Exception(f"Status {response.status_code}")
     except Exception as e:
-        raise Exception(f"Gemini: {str(e)}")
+        raise Exception(f"Groq: {str(e)}")
 
 def post_to_linkedin(text):
     token = os.getenv('LINKEDIN_TOKEN')
@@ -86,24 +88,26 @@ def post_to_linkedin(text):
     
     return requests.post(url, headers=headers, json=payload, timeout=10)
 
-print("Starting...")
+print("Starting LinkedIn Auto Post...")
 try:
     history = load_history()
     topic = pick_topic(history)
     print(f"Topic: {topic}")
     
+    print("Generating with Groq AI...")
     content = generate_post(topic)
-    print("Content generated")
+    print(f"Generated: {len(content)} chars")
     
+    print("Publishing to LinkedIn...")
     result = post_to_linkedin(content)
     
     if result.status_code in [200, 201]:
         history[topic] = datetime.now().isoformat()
         save_history(history)
-        print("SUCCESS!")
+        print("✅ SUCCESS - Posted to LinkedIn!")
     else:
-        print(f"Status: {result.status_code}")
-        print(f"Error: {result.text[:200]}")
+        print(f"❌ LinkedIn Error {result.status_code}")
+        print(result.text[:300])
         
 except Exception as e:
-    print(f"Error: {str(e)}")
+    print(f"❌ Error: {str(e)}")
