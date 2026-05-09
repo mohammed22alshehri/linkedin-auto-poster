@@ -2,15 +2,13 @@ name: LinkedIn Auto Post
 
 on:
   schedule:
-    # هذا الكود يجعله يعمل تلقائياً كل يوم الساعة 9 صباحاً
     - cron: '0 9 * * *'
-  workflow_dispatch: # يتيح لك تشغيله يدوياً للتجربة
+  workflow_dispatch: 
 
 jobs:
   post:
     runs-on: ubuntu-latest
     
-    # تصريح للسماح للـ Bot بالكتابة في المستودع
     permissions:
       contents: write
 
@@ -18,7 +16,7 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # مهم جداً لجلب كل التعديلات وتجنب مشاكل الـ Push
+          fetch-depth: 0 
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -27,28 +25,28 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          pip install requests google-genai
+          # لاحظ هنا استبدلنا مكتبة جيميناي بمكتبة جروك
+          pip install requests groq
 
       - name: Run Script
         env:
           LINKEDIN_TOKEN: ${{ secrets.LINKEDIN_TOKEN }}
           LINKEDIN_PERSON_ID: ${{ secrets.LINKEDIN_PERSON_ID }}
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          # استخدمنا هنا المفتاح الخاص بـ Groq
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
         run: python script.py
 
       - name: Sync and Push Changes
         run: |
-          # تعريف الـ Bot للنظام
           git config user.name "LinkedIn Bot"
           git config user.email "bot@automation.com"
           
-          # إضافة الملف الذي يحتوي على المواضيع المستخدمة
+          # التأكد من وجود الملف قبل إضافته لتجنب الأخطاء
+          touch used_topics.json 
           git add used_topics.json
           
-          # أهم خطوة: سحب أي تغييرات جديدة من السيرفر ودمجها مع تعديلات الـ Bot
           git pull --rebase origin main
           
-          # التحقق إذا كان هناك تعديل فعلي للملف قبل عمل Commit
           if [ -n "$(git status --porcelain)" ]; then
             git commit -m "Update topics history - $(date '+%Y-%m-%d')"
             git push
