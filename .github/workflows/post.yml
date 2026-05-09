@@ -37,17 +37,23 @@ jobs:
 
       - name: Sync and Push Changes
         run: |
-          git config user.name "LinkedIn Bot"
+         git config user.name "LinkedIn Bot"
           git config user.email "bot@automation.com"
+          
+          # تجاهل مجلدات الكاش الخاصة ببيثون
+          echo "__pycache__/" >> .gitignore
           
           git pull --rebase origin main
           
-          touch used_topics.json
-          git add used_topics.json
+          # محاولة إضافة الملف فقط إذا كان موجوداً وتم تعديله
+          if [ -f used_topics.json ]; then
+            git add used_topics.json
+          fi
           
-          if [ -n "$(git status --porcelain)" ]; then
+          # التحقق من التغييرات في used_topics.json فقط
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
             git commit -m "Update topics history - $(date '+%Y-%m-%d')"
             git push origin main
-          else
-            echo "No changes to commit"
           fi
