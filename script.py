@@ -33,7 +33,7 @@ headers = {
 }
 
 payload = {
-    "author": f"urn:li:person:{person_id}",
+    "author": f"urn:li:member:{person_id}", 
     "lifecycleState": "PUBLISHED",
     "specificContent": {
         "com.linkedin.ugc.ShareContent": {
