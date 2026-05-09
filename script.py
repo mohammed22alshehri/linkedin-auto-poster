@@ -48,12 +48,13 @@ def post_to_linkedin(content, topic, used_topics):
     url = "https://api.linkedin.com/rest/posts"
     
     # ملاحظة: تأكد أن هذا التاريخ هو الأحدث في صفحة LinkedIn Developers لديك
-   headers = {
+    # تأكد أن هذا السطر وما بعده يبدأ بنفس الإزاحة داخل الدالة
+        headers = {
         "Authorization": f"Bearer {LINKEDIN_TOKEN}",
-        "LinkedIn-Version": "202502", # قم بتغيير هذا السطر
+        "LinkedIn-Version": "202502",
         "X-Restli-Protocol-Version": "2.0.0",
         "Content-Type": "application/json",
-    }
+        }
 
     payload = {
         "author": author,
