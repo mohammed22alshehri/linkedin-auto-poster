@@ -4,37 +4,38 @@ import os
 print("Testing LinkedIn API Connection...")
 
 token = os.getenv('LINKEDIN_TOKEN')
-person_id = os.getenv('LINKEDIN_PERSON_ID').strip()
+person_id = os.getenv('LINKEDIN_PERSON_ID', '').strip()
 
-# الهيدرز الجديدة الإلزامية
+# الهيدر الموحد لجميع الطلبات
+# سنستخدم إصدار 202506 لأنه متوافق مع الأنظمة الحديثة
 headers = {
     "Authorization": f"Bearer {token}",
     "Content-Type": "application/json",
     "X-Restli-Protocol-Version": "2.0.0",
-    "LinkedIn-Version": "202401"  # هذا السطر يحل مشكلة NO_VERSION
+    "LinkedIn-Version": "202506" 
 }
 
-# 1️⃣ اختبر الـ token بالمسار الجديد
+# 1️⃣ اختبار التوكن (يجب إرسال الهيدر هنا أيضاً لتجنب 404)
 print("\n1. Testing token validity...")
-# نستخدم /rest/userinfo بدلاً من /v2/me لأنها الأحدث
-result = requests.get("https://api.linkedin.com/rest/userinfo", headers=headers)
+test_url = "https://api.linkedin.com/rest/userinfo"
+result = requests.get(test_url, headers=headers)
 
 print(f"Status: {result.status_code}")
 if result.status_code == 200:
     me = result.json()
-    print(f"Your Profile Name: {me.get('given_name')} {me.get('family_name')}")
-    # الـ sub هو الـ ID الذي يجب استخدامه في النشر
-    print(f"Your correct ID (sub): {me.get('sub')}")
+    print(f"Connection Successful! Hello {me.get('given_name')}")
+    # إذا لم تكن متأكداً من الـ ID، السطر التالي سيطبع لك الـ sub الصحيح
+    print(f"Your correct sub ID is: {me.get('sub')}")
 else:
-    print(f"Error: {result.text}")
+    print(f"Error during test: {result.text}")
 
-# 2️⃣ النشر باستخدام المسار المذكور في قائمتك /rest/posts
+# 2️⃣ محاولة النشر
 print("\n2. Attempting to post...")
-url = "https://api.linkedin.com/rest/posts"
+post_url = "https://api.linkedin.com/rest/posts"
 
 payload = {
-    "author": f"urn:li:person:{person_id}", # تأكد أنها person
-    "commentary": "Test post from automation using REST API",
+    "author": f"urn:li:person:{person_id}",
+    "commentary": "Automation test post - System Update 2026",
     "visibility": "PUBLIC",
     "distribution": {
         "feedDistribution": "MAIN_FEED",
@@ -45,6 +46,6 @@ payload = {
     "isReshareDisabledByAuthor": False
 }
 
-result = requests.post(url, headers=headers, json=payload)
-print(f"Status: {result.status_code}")
-print(f"Response: {result.text}")
+response = requests.post(post_url, headers=headers, json=payload)
+print(f"Status: {response.status_code}")
+print(f"Response: {response.text}")
