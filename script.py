@@ -18,7 +18,7 @@ def post_to_linkedin():
     }
     
     post_data = {
-        "author": f"urn:li:person:{PERSON_ID}",
+        "author": f"urn:li:member:{PERSON_ID}",
         "lifecycleState": "PUBLISHED",
         "specificContent": {
             "com.linkedin.ugc.ShareContent": {
