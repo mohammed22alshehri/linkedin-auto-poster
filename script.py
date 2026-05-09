@@ -17,7 +17,7 @@ headers = {
 }
 
 post_data = {
-    "author": f"urn:li:person:{LINKEDIN_PERSON_ID}",
+    "author": f"urn:li:member:{LINKEDIN_PERSON_ID}",
     "lifecycleState": "PUBLISHED",
     "specificContent": {
         "com.linkedin.ugc.ShareContent": {
