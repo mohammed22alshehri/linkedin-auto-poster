@@ -2,16 +2,16 @@ name: LinkedIn Auto Post
 
 on:
   schedule:
-    # سيتم التشغيل يومياً الساعة 9 صباحاً بتوقيت جرينتش
+    # التشغيل يومياً الساعة 9 صباحاً بتوقيت جرينتش
     - cron: '0 9 * * *'
-  workflow_dispatch: # يتيح لك تشغيل البوت يدوياً للتجربة
+  workflow_dispatch: # للتشغيل اليدوي وقتما تحب
 
 jobs:
   post:
     runs-on: ubuntu-latest
     
     permissions:
-      contents: write # ضروري للسماح للبوت بتحديث ملف used_topics.json
+      contents: write # للسماح للبوت بتحديث ملف used_topics.json
 
     steps:
       - name: Checkout Repository
@@ -26,34 +26,31 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          pip install requests groq
+          pip install requests google-generativeai  # أضفنا مكتبة Gemini هنا
 
       - name: Run Script
         env:
           LINKEDIN_TOKEN: ${{ secrets.LINKEDIN_TOKEN }}
-          LINKEDIN_PERSON_ID: ${{ secrets.LINKEDIN_PERSON_ID }}
-          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}  # أضفنا مفتاح Gemini
         run: python script.py
 
       - name: Sync and Push Changes
         run: |
-         git config user.name "LinkedIn Bot"
+          git config user.name "LinkedIn Bot"
           git config user.email "bot@automation.com"
           
-          # تجاهل مجلدات الكاش الخاصة ببيثون
-          echo "__pycache__/" >> .gitignore
-          
+          # تأكد من وجود ملف الذاكرة إذا لم يكن موجوداً
+          if [ ! -f used_topics.json ]; then
+            echo "[]" > used_topics.json
+          fi
+
           git pull --rebase origin main
           
-          # محاولة إضافة الملف فقط إذا كان موجوداً وتم تعديله
-          if [ -f used_topics.json ]; then
-            git add used_topics.json
-          fi
+          git add used_topics.json
           
-          # التحقق من التغييرات في used_topics.json فقط
           if git diff --cached --quiet; then
             echo "No changes to commit"
           else
-            git commit -m "Update topics history - $(date '+%Y-%m-%d')"
+            git commit -m "Update topics history [skip ci]"
             git push origin main
           fi
