@@ -23,7 +23,7 @@ def generate_with_ai(topic):
     # استبدلنا Gemini بـ Groq لحل مشكلة الـ Quota
     client = Groq(api_key=GROQ_API_KEY)
     
-    prompt = f"Write a professional LinkedIn post in English about: {topic}. Use bullet points and engineering hooks."
+    prompt = f" Act as me — Mohammed Al-Shehri, a Software & AI Engineer and Computer Science student specialized in web development, databases, AI integration, and enterprise systems. Write a professional LinkedIn post in English about: {topic} Writing Style: - Sound natural, smart, and professional. - Write like a real engineer sharing experience or insight. - Keep the tone confident and modern. - Avoid fake motivation and corporate buzzwords. - Make it feel personal and authentic. - Keep it concise and impactful (120–180 words). Structure: 1. Start with a strong hook. 2. Explain the topic clearly in a practical engineering way. 3. Use short paragraphs or bullet points for readability. 4. End with a real takeaway, insight, or question. Extra Instructions: - Mention technologies when relevant (AI, Python, Oracle, SQL, APIs, Web Development, Cloud, etc.). - Make the post suitable for LinkedIn engagement. - Add professional hashtags at the end. Also: - Suggest 2 high-quality professional images related to the topic. - Provide direct image URLs from the internet. - Images should match engineering, AI, software, cloud, or development themes.
     
     completion = client.chat.completions.create(
         model="llama-3.3-70b-versatile",
