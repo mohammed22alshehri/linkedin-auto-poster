@@ -1,75 +1,121 @@
 import os
 import requests
+import random
+import json
+import google.generativeai as genai
+from topics import topics_list
 
-# السحب من GitHub Secrets
+# Configuration & Secrets
 ACCESS_TOKEN = os.getenv('LINKEDIN_TOKEN')
-
-# نسخة الـ API المدعومة
+GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
 API_VERSION = '202601'
 
-def get_my_urn():
-    """جلب معرف المستخدم (Person ID) آلياً باستخدام التوكن"""
-    url = "https://api.linkedin.com/v2/userinfo"
-    headers = {"Authorization": f"Bearer {ACCESS_TOKEN}"}
+def get_random_topic():
+    """Selects a topic that hasn't been used yet."""
+    used_topics = []
+    if os.path.exists('used_topics.json'):
+        with open('used_topics.json', 'r') as f:
+            try:
+                used_topics = json.load(f)
+            except:
+                used_topics = []
     
-    try:
-        response = requests.get(url, headers=headers)
-        if response.status_code == 200:
-            user_data = response.json()
-            # في userinfo المعرف يكون في حقل 'sub'
-            return user_data.get('sub')
-        else:
-            print(f"❌ فشل جلب بيانات المستخدم: {response.status_code}")
-            return None
-    except Exception as e:
-        print(f"⚠️ خطأ أثناء جلب المعرف: {e}")
+    available_topics = [t for t in topics_list if t not in used_topics]
+    
+    if not available_topics:
         return None
+    
+    return random.choice(available_topics)
+
+def generate_with_gemini(topic):
+    """Generates professional English LinkedIn content using Gemini."""
+    genai.configure(api_key=GEMINI_API_KEY)
+    model = genai.GenerativeModel('gemini-1.5-flash')
+    
+    prompt = f"""
+    You are an expert Systems Engineer and AI Specialist.
+    Write a high-authority LinkedIn post in English about the following topic: {topic}.
+    
+    Guidelines:
+    1. Start with a strong 'hook' to grab attention.
+    2. Use bullet points for key takeaways to ensure scannability.
+    3. Include a practical 'pro-tip' or engineering insight.
+    4. Maintain a professional, insightful, and non-salesy tone.
+    5. End with relevant hashtags like #SoftwareEngineering #AI #CloudComputing #SystemDesign.
+    6. Ensure the post is engaging and formatted for the LinkedIn feed.
+    """
+    
+    response = model.generate_content(prompt)
+    return response.text
+
+def update_history(topic):
+    """Saves the used topic to prevent duplicates in the future."""
+    used_topics = []
+    if os.path.exists('used_topics.json'):
+        with open('used_topics.json', 'r') as f:
+            try:
+                used_topics = json.load(f)
+            except:
+                used_topics = []
+    
+    used_topics.append(topic)
+    with open('used_topics.json', 'w', encoding='utf-8') as f:
+        json.dump(used_topics, f, indent=4)
 
 def post_to_linkedin():
-    # 1. الحصول على المعرف الصحيح أولاً
-    person_id = get_my_urn()
-    if not person_id:
-        print("❌ تعذر استخراج Person ID، تأكد من صلاحية التوكن.")
+    # 1. Topic selection
+    topic = get_random_topic()
+    if not topic:
+        print("🎉 Success: All topics in the list have been exhausted!")
         return
 
-    print(f"✅ تم تحديد المعرف: {person_id}")
+    print(f"✍️ Generating content for topic: {topic}")
+    content = generate_with_gemini(topic)
 
-    # 2. إعداد طلب النشر
+    # 2. Fetching Member ID (URN) dynamically
+    try:
+        user_info_res = requests.get(
+            "https://api.linkedin.com/v2/userinfo", 
+            headers={"Authorization": f"Bearer {ACCESS_TOKEN}"}
+        )
+        person_id = user_info_res.json().get('sub')
+    except Exception as e:
+        print(f"❌ Error fetching user info: {e}")
+        return
+
+    if not person_id:
+        print("❌ Error: Could not verify Person ID. Check token permissions.")
+        return
+
+    # 3. Executing the LinkedIn Post
     url = "https://api.linkedin.com/rest/posts"
     headers = {
         "Authorization": f"Bearer {ACCESS_TOKEN}",
-        "Content-Type": "application/json",
         "LinkedIn-Version": API_VERSION,
-        "X-Restli-Protocol-Version": "2.0.0"
+        "X-Restli-Protocol-Version": "2.0.0",
+        "Content-Type": "application/json"
     }
 
-    post_data = {
+    payload = {
         "author": f"urn:li:person:{person_id}",
-        "commentary": "Published automatically using GitHub Actions and LinkedIn API 2026 🚀",
+        "commentary": content,
         "visibility": "PUBLIC",
-        "distribution": {
-            "feedDistribution": "MAIN_FEED",
-            "targetEntities": [],
-            "thirdPartyDistributionChannels": []
-        },
+        "distribution": {"feedDistribution": "MAIN_FEED"},
         "lifecycleState": "PUBLISHED",
         "isReshareDisabledByAuthor": False
     }
 
-    try:
-        print(f"🚀 جاري محاولة النشر...")
-        response = requests.post(url, headers=headers, json=post_data)
-
-        if response.status_code in [200, 201]:
-            print("✅ نجحت العملية! تم النشر بنجاح.")
-        else:
-            print(f"❌ فشل النشر! كود الحالة: {response.status_code}")
-            print(f"📄 الرد: {response.text}")
-    except Exception as e:
-        print(f"⚠️ خطأ برمجـي: {e}")
+    response = requests.post(url, headers=headers, json=payload)
+    
+    if response.status_code in [200, 201]:
+        print(f"🚀 Successfully posted to LinkedIn: {topic}")
+        update_history(topic)
+    else:
+        print(f"❌ Failed to post. Status: {response.status_code}")
+        print(f"📄 Response Error: {response.text}")
 
 if __name__ == "__main__":
-    if not ACCESS_TOKEN:
-        print("❌ تأكد من ضبط Secret: LINKEDIN_TOKEN")
+    if not ACCESS_TOKEN or not GEMINI_API_KEY:
+        print("❌ Missing environment variables. Ensure LINKEDIN_TOKEN and GEMINI_API_KEY are set.")
     else:
         post_to_linkedin()
