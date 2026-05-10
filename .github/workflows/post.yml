@@ -26,12 +26,12 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          pip install requests groq  # تم استبدال google-genai بـ groq
+          pip install requests groq
 
       - name: Run Script
         env:
           LINKEDIN_TOKEN: ${{ secrets.LINKEDIN_TOKEN }}
-          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}  # تم تغيير اسم الـ Secret هنا
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
         run: python script.py
 
       - name: Sync and Push Changes
@@ -39,15 +39,15 @@ jobs:
           git config user.name "LinkedIn Bot"
           git config user.email "bot@automation.com"
           
-          # تأكد من وجود ملف الذاكرة إذا لم يكن موجوداً
-          if [ ! -f used_topics.json ]; then
-            echo "[]" > used_topics.json
-          fi
-
-          git pull --rebase origin main
-          
+          # 1. أضف التغييرات التي قام بها السكريبت أولاً (Stage the changes)
+          # هذا يجعل Git "يعرف" عن التغييرات قبل محاولة الـ pull
           git add used_topics.json
           
+          # 2. جلب التحديثات من المستودع مع دمجها خلف تغييراتك الحالية
+          # استخدام --autostash سيقوم بإخفاء التغييرات مؤقتاً وإعادتها بعد الـ pull تلقائياً
+          git pull --rebase --autostash origin main
+          
+          # 3. التأكد من وجود تغييرات حقيقية لعمل Commit
           if git diff --cached --quiet; then
             echo "No changes to commit"
           else
