@@ -5,8 +5,8 @@ import requests
 ACCESS_TOKEN = os.getenv('LINKEDIN_TOKEN')
 PERSON_ID = os.getenv('LINKEDIN_PERSON_ID')
 
-# تحديث الإصدار إلى مايو 2025 لضمان العمل في مايو 2026
-API_VERSION = '202601' 
+# التحديث إلى النسخة المقترحة من لينكدإن (بصيغة YYYYMM)
+API_VERSION = '202411' 
 
 def post_to_linkedin():
     url = "https://api.linkedin.com/rest/posts"
@@ -14,7 +14,7 @@ def post_to_linkedin():
     headers = {
         "Authorization": f"Bearer {ACCESS_TOKEN}",
         "Content-Type": "application/json",
-        "Linkedin-Version": "202401",  # هذا هو الإصدار الوحيد المتاح لمنتج النشر عندك
+        "Linkedin-Version": API_VERSION,  # تم ربطها بالمتغير المحدث أعلاه
         "X-Restli-Protocol-Version": "2.0.0"
     }
     
@@ -32,13 +32,14 @@ def post_to_linkedin():
     }
 
     try:
+        # الآن سيطبع الكود النسخة الفعلية المستخدمة في الإرسال
         print(f"🚀 جاري النشر باستخدام إصدار: {API_VERSION}...")
         response = requests.post(url, headers=headers, json=post_data)
         
         if response.status_code in [201, 200]:
             print("✅ تم النشر بنجاح على بروفايلك!")
         else:
-            # طباعة الخطأ بالتفصيل للفحص
+            # طباعة الخطأ بالتفصيل للفحص في حال وجود تحديث آخر مطلوب
             print(f"❌ فشل الطلب: {response.status_code}")
             print(f"تفاصيل الخطأ: {response.text}")
             
