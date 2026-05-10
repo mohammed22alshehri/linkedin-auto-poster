@@ -1,5 +1,5 @@
 # topics.py
-topics_list = {
+topics_dict = {
     "AI": [
         "How AI is reshaping the software engineer's role in 2026",
         "RAG vs Fine-tuning: a practical guide to choosing the right approach",
