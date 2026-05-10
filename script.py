@@ -2,7 +2,7 @@ import os
 import requests
 import random
 import json
-from google import genai  # المكتبة الجديدة
+from google import genai  # المكتبة الرسمية الجديدة لعام 2026
 from topics import topics_list
 
 # Configuration & Secrets
@@ -28,8 +28,8 @@ def get_random_topic():
     return random.choice(available_topics)
 
 def generate_with_gemini(topic):
-    """Generates professional English LinkedIn content using the new Gemini SDK."""
-    # التعديل الجوهري هنا: استخدام google-genai بدل المكتبة القديمة
+    """Generates professional English LinkedIn content using Gemini 3 Flash."""
+    # تحديث: استخدام الكلاينت الجديد بدلاً من genai.configure
     client = genai.Client(api_key=GEMINI_API_KEY)
     
     prompt = f"""
@@ -45,7 +45,7 @@ def generate_with_gemini(topic):
     6. Ensure the post is engaging and formatted for the LinkedIn feed.
     """
     
-    # استخدام الموديل المستقر في 2026
+    # تحديث: استخدام الموديل الجديد Gemini 3 Flash لحل خطأ الـ 404
     response = client.models.generate_content(
         model='gemini-3-flash', 
         contents=prompt
