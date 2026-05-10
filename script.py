@@ -3,21 +3,48 @@ import requests
 import random
 import json
 from groq import Groq  # التغيير هنا
-from topics import topics_list
+from topics import topics_dict # استيراد القاموس الجديد
 
 # Secrets
 ACCESS_TOKEN = os.getenv('LINKEDIN_TOKEN')
 GROQ_API_KEY = os.getenv('GROQ_API_KEY') # أضف مفتاح Groq في الـ Secrets
 API_VERSION = '202601'
 
+
 def get_random_topic():
     used_topics = []
+    last_category = None
+    
     if os.path.exists('used_topics.json'):
         with open('used_topics.json', 'r') as f:
-            try: used_topics = json.load(f)
-            except: used_topics = []
-    available_topics = [t for t in topics_list if t not in used_topics]
-    return random.choice(available_topics) if available_topics else None
+            try:
+                data = json.load(f)
+                # إذا كانت البيانات قائمة، نأخذ آخر موضوع لمعرفة فئته
+                if isinstance(data, list) and len(data) > 0:
+                    used_topics = data
+                    last_topic = data[-1]
+                    # البحث عن فئة آخر موضوع تم نشره
+                    for cat, topics in topics_dict.items():
+                        if last_topic in topics:
+                            last_category = cat
+                            break
+            except:
+                used_topics = []
+
+    # استبعاد الفئة الأخيرة لضمان عدم التكرار المتتالي
+    available_categories = [c for c in topics_dict.keys() if c != last_category]
+    
+    # محاولة اختيار فئة عشوائية من المتاحة
+    random.shuffle(available_categories)
+    
+    for category in available_categories:
+        # المواضيع في هذه الفئة التي لم تُستخدم بعد
+        possible_topics = [t for t in topics_dict[category] if t not in used_topics]
+        if possible_topics:
+            return random.choice(possible_topics)
+            
+    # إذا انتهت كل المواضيع في كل الفئات، ابدأ من جديد (تصفير الذاكرة)
+    return random.choice(list(topics_dict.values())[0]) # كخيار طوارئ
 
 def generate_with_ai(topic):
     # استبدلنا Gemini بـ Groq لحل مشكلة الـ Quota
