@@ -5,8 +5,8 @@ import requests
 ACCESS_TOKEN = os.getenv('LINKEDIN_TOKEN')
 PERSON_ID = os.getenv('LINKEDIN_PERSON_ID')
 # تم التحديث إلى إصدار أبريل 2026 بناءً على سجلات الأخطاء
-API_VERSION = '202604' 
-
+# جرب تغيير هذا السطر في الكود عندك
+API_VERSION = '202401'
 def post_to_linkedin():
     url = "https://api.linkedin.com/rest/posts"
     
