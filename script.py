@@ -35,9 +35,17 @@ def update_history(topic):
     used_topics = []
     if os.path.exists('used_topics.json'):
         with open('used_topics.json', 'r') as f:
-            try: used_topics = json.load(f)
-            except: used_topics = []
-    used_topics.append(topic)
+            try: 
+                data = json.load(f)
+                # التأكد أن البيانات المحملة هي قائمة وليست قاموس
+                if isinstance(data, list):
+                    used_topics = data
+                else:
+                    used_topics = [] # إعادة ضبطها إذا كانت بتنسيق خاطئ
+            except: 
+                used_topics = []
+                
+    used_topics.append(topic) # الآن نضمن أنها قائمة
     with open('used_topics.json', 'w', encoding='utf-8') as f:
         json.dump(used_topics, f, indent=4)
 
