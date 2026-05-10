@@ -1,6 +1,6 @@
 topics_list = [
     # Artificial Intelligence
-    "How AI is reshaping the software engineer's role in 2025",
+    "How AI is reshaping the software engineer's role in 2026",
     "RAG vs Fine-tuning: a practical guide to choosing the right approach",
     "Common mistakes when deploying AI applications to production",
     "How to evaluate the output quality of an LLM in your project",
