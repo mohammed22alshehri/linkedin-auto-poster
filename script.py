@@ -2,37 +2,34 @@ import os
 import requests
 import random
 import json
-from google import genai 
+from groq import Groq  # التغيير هنا
 from topics import topics_list
 
-# Configuration & Secrets
+# Secrets
 ACCESS_TOKEN = os.getenv('LINKEDIN_TOKEN')
-GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
+GROQ_API_KEY = os.getenv('GROQ_API_KEY') # أضف مفتاح Groq في الـ Secrets
 API_VERSION = '202601'
 
 def get_random_topic():
     used_topics = []
     if os.path.exists('used_topics.json'):
         with open('used_topics.json', 'r') as f:
-            try:
-                used_topics = json.load(f)
-            except:
-                used_topics = []
+            try: used_topics = json.load(f)
+            except: used_topics = []
     available_topics = [t for t in topics_list if t not in used_topics]
     return random.choice(available_topics) if available_topics else None
 
-def generate_with_gemini(topic):
-    # استخدام الموديل المستقر تقنياً في 2026
-    client = genai.Client(api_key=GEMINI_API_KEY)
+def generate_with_ai(topic):
+    # استبدلنا Gemini بـ Groq لحل مشكلة الـ Quota
+    client = Groq(api_key=GROQ_API_KEY)
     
     prompt = f"Write a professional LinkedIn post in English about: {topic}. Use bullet points and engineering hooks."
     
-    # التغيير الجوهري هنا: gemini-2.0-flash هو الاسم المعتمد في الـ API
-    response = client.models.generate_content(
-        model='gemini-2.0-flash', 
-        contents=prompt
+    completion = client.chat.completions.create(
+        model="llama-3.3-70b-versatile",
+        messages=[{"role": "user", "content": prompt}]
     )
-    return response.text
+    return completion.choices[0].message.content
 
 def update_history(topic):
     used_topics = []
@@ -46,13 +43,14 @@ def update_history(topic):
 
 def post_to_linkedin():
     topic = get_random_topic()
-    if not topic:
-        print("🎉 All topics exhausted!")
-        return
+    if not topic: return
 
     print(f"✍️ Generating content for: {topic}")
-    content = generate_with_gemini(topic)
+    content = generate_with_ai(topic) # مناداة الدالة الجديدة
 
+    if not content: return
+
+    # باقي كود LinkedIn كما هو بدون أي تغيير
     try:
         user_info = requests.get(
             "https://api.linkedin.com/v2/userinfo", 
@@ -87,5 +85,5 @@ def post_to_linkedin():
         print(f"❌ Failed: {response.text}")
 
 if __name__ == "__main__":
-    if ACCESS_TOKEN and GEMINI_API_KEY:
+    if ACCESS_TOKEN and GROQ_API_KEY:
         post_to_linkedin()
