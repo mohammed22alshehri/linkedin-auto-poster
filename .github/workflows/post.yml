@@ -4,7 +4,7 @@ on:
   schedule:
     # التشغيل يومياً الساعة 9 صباحاً بتوقيت جرينتش
     - cron: '0 9 * * *'
-  workflow_dispatch: # للتشغيل اليدوي وقتما تحب
+  workflow_dispatch: # للتشغيل اليدوي
 
 jobs:
   post:
@@ -26,12 +26,12 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          pip install requests google-genai
+          pip install requests groq  # تم استبدال google-genai بـ groq
 
       - name: Run Script
         env:
           LINKEDIN_TOKEN: ${{ secrets.LINKEDIN_TOKEN }}
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}  # أضفنا مفتاح Gemini
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}  # تم تغيير اسم الـ Secret هنا
         run: python script.py
 
       - name: Sync and Push Changes
