@@ -2,7 +2,7 @@ import os
 import requests
 import random
 import json
-import google.generativeai as genai
+from google import genai  # المكتبة الجديدة
 from topics import topics_list
 
 # Configuration & Secrets
@@ -28,9 +28,9 @@ def get_random_topic():
     return random.choice(available_topics)
 
 def generate_with_gemini(topic):
-    """Generates professional English LinkedIn content using Gemini."""
-    genai.configure(api_key=GEMINI_API_KEY)
-    model = genai.GenerativeModel('gemini-1.5-flash')
+    """Generates professional English LinkedIn content using the new Gemini SDK."""
+    # التعديل الجوهري هنا: استخدام google-genai بدل المكتبة القديمة
+    client = genai.Client(api_key=GEMINI_API_KEY)
     
     prompt = f"""
     You are an expert Systems Engineer and AI Specialist.
@@ -45,7 +45,11 @@ def generate_with_gemini(topic):
     6. Ensure the post is engaging and formatted for the LinkedIn feed.
     """
     
-    response = model.generate_content(prompt)
+    # استخدام الموديل المستقر في 2026
+    response = client.models.generate_content(
+        model='gemini-3-flash', 
+        contents=prompt
+    )
     return response.text
 
 def update_history(topic):
