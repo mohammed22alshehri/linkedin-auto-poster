@@ -10,7 +10,7 @@ def post_to_linkedin():
     
     # تحديث الإصدار إلى 202512 أو 202601
     # لينكدإن تطلب صيغة YYYYMM
-    api_version = "202512" 
+    api_version = "202604" 
 
     headers = {
         "Authorization": f"Bearer {ACCESS_TOKEN}",
