@@ -5,8 +5,8 @@ import requests
 ACCESS_TOKEN = os.getenv('LINKEDIN_TOKEN')
 PERSON_ID = os.getenv('LINKEDIN_PERSON_ID')
 
-# بناءً على صور الـ Endpoints، هذا هو الإصدار المتوافق مع منتجك
-API_VERSION = '202401' 
+# تحديث الإصدار إلى مايو 2025 لضمان العمل في مايو 2026
+API_VERSION = '202505' 
 
 def post_to_linkedin():
     url = "https://api.linkedin.com/rest/posts"
@@ -14,13 +14,13 @@ def post_to_linkedin():
     headers = {
         "Authorization": f"Bearer {ACCESS_TOKEN}",
         "Content-Type": "application/json",
-        "LinkedIn-Version": API_VERSION,
+        "Linkedin-Version": "202401",  # هذا هو الإصدار الوحيد المتاح لمنتج النشر عندك
         "X-Restli-Protocol-Version": "2.0.0"
     }
     
     post_data = {
         "author": f"urn:li:person:{PERSON_ID}",
-        "commentary": "تم تحديث نظام الأتمتة بنجاح للتوافق مع إصدار 202401 🚀✨",
+        "commentary": "اختبار نهائي للأتمتة 🚀",
         "visibility": "PUBLIC",
         "distribution": {
             "feedDistribution": "MAIN_FEED",
@@ -32,19 +32,21 @@ def post_to_linkedin():
     }
 
     try:
-        print(f"🚀 المحاولة باستخدام إصدار API: {API_VERSION}...")
+        print(f"🚀 جاري النشر باستخدام إصدار: {API_VERSION}...")
         response = requests.post(url, headers=headers, json=post_data)
         
         if response.status_code in [201, 200]:
-            print("✅ تم النشر بنجاح!")
+            print("✅ تم النشر بنجاح على بروفايلك!")
         else:
-            print(f"❌ خطأ {response.status_code}: {response.text}")
+            # طباعة الخطأ بالتفصيل للفحص
+            print(f"❌ فشل الطلب: {response.status_code}")
+            print(f"تفاصيل الخطأ: {response.text}")
             
     except Exception as e:
-        print(f"⚠️ خطأ غير متوقع: {e}")
+        print(f"⚠️ خطأ تقني: {e}")
 
 if __name__ == "__main__":
     if not ACCESS_TOKEN or not PERSON_ID:
-        print("❌ خطأ: المتغيرات البيئية مفقودة!")
+        print("❌ خطأ: تأكد من ضبط Secrets في GitHub!")
     else:
         post_to_linkedin()
