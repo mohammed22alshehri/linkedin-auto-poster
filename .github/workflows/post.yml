@@ -26,7 +26,7 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          pip install requests google-generativeai  # أضفنا مكتبة Gemini هنا
+          pip install requests google-genai
 
       - name: Run Script
         env:
