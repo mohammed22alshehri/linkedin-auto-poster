@@ -45,7 +45,7 @@ def post_to_linkedin():
 
     post_data = {
         "author": f"urn:li:person:{person_id}",
-        "commentary": "تم النشر آلياً باستخدام GitHub Actions و LinkedIn API 2026 🚀",
+        "commentary": "Published automatically using GitHub Actions and LinkedIn API 2026 🚀",
         "visibility": "PUBLIC",
         "distribution": {
             "feedDistribution": "MAIN_FEED",
