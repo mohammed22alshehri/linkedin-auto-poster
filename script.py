@@ -51,17 +51,17 @@ Writing Style:
 - Write like a real engineer sharing experience or insight.
 - Keep the tone confident and modern.
 - Avoid fake motivation and corporate buzzwords.
-- Keep it concise and impactful (120–180 words).
+- Keep it concise and impactful (90–120 words).
 
 Structure:
-1. Start with a strong hook.
+1. Start with a Very strong hook.
 2. Explain the topic clearly in a practical engineering way.
 3. Use short paragraphs or bullet points for readability.
 4. End with a real takeaway or question.
 
 Extra Instructions:
 - Mention relevant techs (AI, Python, SQL, APIs, etc.).
-- Add professional hashtags at the end."""
+- Add professional hashtags at the end, two lines below the text."""
     
     completion = client.chat.completions.create(
         model="llama-3.3-70b-versatile",
