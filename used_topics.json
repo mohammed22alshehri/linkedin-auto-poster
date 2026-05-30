@@ -7,5 +7,6 @@
     "Docker explained: from zero to production in 5 core concepts",
     "The C4 Model: how to draw system architecture with clarity",
     "How to read documentation efficiently and save hours of your time",
-    "PostgreSQL vs MongoDB: when to choose each and why"
+    "PostgreSQL vs MongoDB: when to choose each and why",
+    "Common mistakes when deploying AI applications to production"
 ]
