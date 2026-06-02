@@ -9,5 +9,6 @@
     "How to read documentation efficiently and save hours of your time",
     "PostgreSQL vs MongoDB: when to choose each and why",
     "Common mistakes when deploying AI applications to production",
-    "Database Sharding explained: when you need it and how to start"
+    "Database Sharding explained: when you need it and how to start",
+    "How to secure your API Gateway in a production environment"
 ]
