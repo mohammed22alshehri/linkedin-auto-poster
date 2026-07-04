@@ -27,5 +27,6 @@
     "Scaling a backend from 1000 to 1 million users: what actually changes",
     "GitHub Actions: building a professional Workflow from scratch",
     "Prompt Engineering vs Context Engineering: what actually matters",
-    "How to analyze project requirements before writing a single line of code"
+    "How to analyze project requirements before writing a single line of code",
+    "AsyncIO explained: when to use it and when to avoid it"
 ]
